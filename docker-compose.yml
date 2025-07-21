@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  postgres-paciente:
+    image: postgres:16
+    container_name: postgres-paciente
+    restart: always
+    environment:
+      POSTGRES_DB: geosus_paciente
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - paciente_pgdata:/var/lib/postgresql/data
+
+  postgres-fila:
+    image: postgres:16
+    container_name: postgres-fila
+    restart: always
+    environment:
+      POSTGRES_DB: geosus_fila
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - fila_pgdata:/var/lib/postgresql/data
+
+  postgres-unidade:
+    image: postgres:15.4
+    container_name: postgres-unidade
+    restart: always
+    environment:
+      POSTGRES_DB: geosus
+      POSTGRES_USER: geosus
+      POSTGRES_PASSWORD: geosus
+    ports:
+      - "5432:5432"
+    volumes:
+      - unidade_pgdata:/var/lib/postgresql/data
+
+  paciente-service:
+    build:
+      context: ./paciente-service
+    container_name: paciente-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres-paciente
+
+  fila-service:
+    build:
+      context: ./fila-service
+    container_name: fila-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - postgres-fila
+      - paciente-service
+
+  unidade-service:
+    build:
+      context: ./unidade-service
+    container_name: unidade-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-unidade
+
+volumes:
+  paciente_pgdata:
+  fila_pgdata:
+  unidade_pgdata:
